@@ -1,0 +1,7 @@
+node_modules/
+cookies.txt
+*.log
+.openclaw/
+projects/glucose_state.json
+projects/web_state.json
+projects/cmd.json

@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Antigravity Glucose Simulator v2.0</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #0b0e11;
+            --card-bg: #15191d;
+            --panel-bg: #1e2329;
+            --text-main: #eaecef;
+            --text-muted: #848e9c;
+            --libre-cyan: #00FFCC;
+            --blood-red: #f6465d;
+            --zone-green: rgba(2, 192, 118, 0.15);
+            --accent: #2979ff;
+            --high: #f0b90b;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            background: var(--panel-bg);
+            border-radius: 12px;
+            border: 1px solid #333;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 1rem;
+            color: var(--libre-cyan);
+        }
+
+        .time-display {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .main-display {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 20px;
+            text-align: center;
+            border: 1px solid #222;
+            position: relative;
+        }
+
+        .big-number {
+            font-size: 5rem;
+            font-weight: 800;
+            color: var(--libre-cyan);
+            line-height: 1;
+            margin: 10px 0;
+        }
+
+        .unit { color: var(--text-muted); font-size: 1rem; }
+        .trend-arrow { font-size: 2.5rem; color: var(--libre-cyan); margin-left: 10px; }
+
+        .metrics-bar {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .metric-item {
+            background: var(--panel-bg);
+            padding: 10px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; }
+        .value { font-size: 1.1rem; font-weight: bold; }
+
+        .chart-container {
+            flex: 1;
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 10px;
+            border: 1px solid #222;
+            min-height: 200px;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            padding-bottom: 20px;
+        }
+
+        button {
+            background: #2b3139;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        button:active { transform: scale(0.95); }
+        button.primary { background: var(--libre-cyan); color: #000; }
+        button.danger { background: var(--blood-red); color: #fff; }
+
+        .speed-control {
+            grid-column: span 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 5px;
+        }
+
+        select {
+            background: #2b3139;
+            color: white;
+            border: 1px solid #444;
+            padding: 5px;
+            border-radius: 4px;
+        }
+
+        .event-log {
+            height: 80px;
+            overflow-y: auto;
+            background: #000;
+            border-radius: 8px;
+            padding: 8px;
+            font-family: monospace;
+            font-size: 0.75rem;
+            color: #888;
+            border: 1px solid #333;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Gravity Simulator 2.0</h1>
+        <div id="clock" class="time-display">00:00</div>
+    </header>
+
+    <div class="main-display" id="bg-display">
+        <div class="label">Glucosa en tiempo real</div>
+        <div class="big-number" id="glucose-val">--</div>
+        <div>
+            <span class="trend-arrow" id="trend-arrow">→</span>
+            <span class="unit">mg/dL</span>
+        </div>
+        <div id="ai-status" style="margin-top: 10px; font-size: 0.8rem; font-weight: bold;">Iniciando...</div>
+    </div>
+
+    <div class="metrics-bar">
+        <div class="metric-item">
+            <div class="label">Insulina Activa (IOB)</div>
+            <div class="value" id="val-iob">0.00 U</div>
+        </div>
+        <div class="metric-item">
+            <div class="label">Predicción 30m</div>
+            <div class="value" id="val-pred">--</div>
+        </div>
+    </div>
+
+    <div class="chart-container">
+        <canvas id="mainChart"></canvas>
+    </div>
+
+    <div class="event-log" id="log"></div>
+
+    <div class="controls">
+        <button onclick="addMeal(30, 'simple')">🍎 +30g Carbs</button>
+        <button onclick="addMeal(90, 'pizza')">🍕 Pizza (90g)</button>
+        <button class="primary" onclick="addInsulin(2)">💉 +2u Insulina</button>
+        <button class="danger" onclick="addInsulin(10)">💉 +10u Bolo</button>
+        
+        <div class="speed-control">
+            Velocidad:
+            <select id="speed-sel" onchange="updateSpeed()">
+                <option value="1000">Tiempo Real (1s=1m)</option>
+                <option value="200">Rápido (5x)</option>
+                <option value="50">Turbo (20x)</option>
+            </select>
+            <button onclick="resetSim()" style="padding: 5px 10px;">Reset</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- PHYSIOLOGY ENGINE ---
+    const GB_BASE = 110.0;
+    const IB_BASE = 15.0;
+    const P1 = 0.01;
+    const P2 = 0.0125;
+    const P3_BASE = 0.00005;
+
+    class Meal {
+        constructor(carbs, time, type) {
+            this.carbs = carbs;
+            this.time = time;
+            this.type = type;
+        }
+        getRate(t) {
+            const dt = t - this.time;
+            if (dt < 0) return 0;
+            const totalRise = this.carbs * 8.0;
+            if (this.type === 'simple') {
+                const beta = 1.0 / 40.0;
+                return totalRise * (beta**2) * dt * Math.exp(-beta * dt);
+            } else {
+                // Pizza: double peak or slower absorption
+                const beta = 1.0 / 120.0;
+                return totalRise * (beta**2) * dt * Math.exp(-beta * dt);
+            }
+        }
+    }
+
+    class Patient {
+        constructor() {
+            this.reset();
+        }
+        reset() {
+            this.G = GB_BASE;
+            this.I = IB_BASE;
+            this.X = 0;
+            this.meals = [];
+            this.history = [];
+        }
+        step(t, dt) {
+            // Dawn phenomenon (04:00 - 08:00)
+            const isDawn = t >= 240 && t <= 480;
+            let currentP3 = P3_BASE;
+            if (isDawn) currentP3 *= 0.6; // Reduced insulin sensitivity
+
+            // Carb absorption rate
+            let Ra = 0;
+            this.meals.forEach(m => Ra += m.getRate(t));
+
+            // Pancreas endogenous secretion
+            let secretion = (this.G > 100) ? (this.G - 100) * 0.4 : 0;
+            
+            // Insulin dynamics
+            const targetI = IB_BASE + secretion;
+            this.I += (targetI - this.I) * 0.1 * dt;
+
+            // Insulin action (Remote)
+            this.X += (-P2 * this.X + currentP3 * (this.I - IB_BASE)) * dt;
+
+            // Glucose change
+            const dG = -(P1 + this.X) * this.G + (P1 * GB_BASE) + Ra;
+            this.G += dG * dt;
+            
+            if (this.G < 20) this.G = 20;
+            if (this.G > 500) this.G = 500;
+        }
+    }
+
+    // --- APP LOGIC ---
+    const patient = new Patient();
+    let time = 0; // minutes
+    let speed = 1000;
+    let timerId = null;
+    let chart = null;
+
+    function addLog(msg) {
+        const log = document.getElementById('log');
+        const h = Math.floor(time / 60).toString().padStart(2, '0');
+        const m = Math.floor(time % 60).toString().padStart(2, '0');
+        log.innerHTML = `<div>[${h}:${m}] ${msg}</div>` + log.innerHTML;
+    }
+
+    function addMeal(carbs, type) {
+        patient.meals.push(new Meal(carbs, time, type));
+        addLog(`Consumo: ${carbs}g de carbohidratos (${type})`);
+    }
+
+    function addInsulin(units) {
+        patient.I += units * 12; // Simplified bolus injection
+        addLog(`Bolo: ${units}u de insulina`);
+    }
+
+    function updateSpeed() {
+        speed = parseInt(document.getElementById('speed-sel').value);
+        clearTimeout(timerId);
+        loop();
+    }
+
+    function resetSim() {
+        time = 0;
+        patient.reset();
+        chart.data.labels = [];
+        chart.data.datasets[0].data = [];
+        chart.update();
+        document.getElementById('log').innerHTML = '';
+        addLog("Simulador reiniciado.");
+    }
+
+    function initChart() {
+        const ctx = document.getElementById('mainChart').getContext('2d');
+        chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Glucosa',
+                    data: [],
+                    borderColor: '#00FFCC',
+                    backgroundColor: 'rgba(0, 255, 204, 0.1)',
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { display: false },
+                    y: { min: 0, max: 400, grid: { color: '#222' }, ticks: { color: '#666' } }
+                },
+                plugins: {
+                    legend: { display: false },
+                    annotation: {
+                        annotations: {
+                            target: {
+                                type: 'box',
+                                yMin: 70, yMax: 140,
+                                backgroundColor: 'rgba(0, 255, 100, 0.05)',
+                                borderWidth: 0
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function loop() {
+        time += 1;
+        patient.step(time, 1);
+        
+        const h = Math.floor(time / 60).toString().padStart(2, '0');
+        const m = Math.floor(time % 60).toString().padStart(2, '0');
+        document.getElementById('clock').innerText = `${h}:${m}`;
+        
+        const gVal = Math.round(patient.G);
+        document.getElementById('glucose-val').innerText = gVal;
+        
+        // IOB
+        const iob = Math.max(0, (patient.I - IB_BASE) / 10).toFixed(2);
+        document.getElementById('val-iob').innerText = `${iob} U`;
+
+        // Alarms & AI Status
+        const aiStatus = document.getElementById('ai-status');
+        const display = document.getElementById('bg-display');
+        if (gVal < 70) {
+            aiStatus.innerText = "🚨 PELIGRO: HIPOGLUCEMIA";
+            aiStatus.style.color = "var(--blood-red)";
+            display.style.borderColor = "var(--blood-red)";
+        } else if (gVal > 180) {
+            aiStatus.innerText = "⚠️ ALERTA: HIPERGLUCEMIA";
+            aiStatus.style.color = "var(--high)";
+            display.style.borderColor = "var(--high)";
+        } else {
+            aiStatus.innerText = "✅ ESTADO: ÓPTIMO";
+            aiStatus.style.color = "var(--libre-cyan)";
+            display.style.borderColor = "#222";
+        }
+
+        // Trend
+        const lastG = patient.history[patient.history.length - 1] || patient.G;
+        const diff = patient.G - lastG;
+        const trend = document.getElementById('trend-arrow');
+        if (diff > 1.5) trend.innerText = "↑";
+        else if (diff > 0.5) trend.innerText = "↗";
+        else if (diff < -1.5) trend.innerText = "↓";
+        else if (diff < -0.5) trend.innerText = "↘";
+        else trend.innerText = "→";
+
+        // Prediction (Simple linear 30m)
+        const pred = Math.round(patient.G + (diff * 30));
+        document.getElementById('val-pred').innerText = `${pred} mg/dL`;
+
+        // Chart update
+        patient.history.push(patient.G);
+        if (patient.history.length > 300) patient.history.shift();
+        
+        chart.data.labels.push("");
+        chart.data.datasets[0].data.push(patient.G);
+        if (chart.data.labels.length > 300) {
+            chart.data.labels.shift();
+            chart.data.datasets[0].data.shift();
+        }
+        chart.update('none');
+
+        timerId = setTimeout(loop, speed);
+    }
+
+    initChart();
+    loop();
+</script>
+
+</body>
+</html>
