@@ -20,44 +20,24 @@
             --accent: #2979ff;
             --high: #f0b90b;
         }
-
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 10px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            height: 100vh;
-            overflow: hidden;
+        /* ... existing styles ... */
+        .sync-indicator {
+            font-size: 0.6rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: #333;
+            color: #888;
         }
+        .sync-online { color: #00FFCC; border: 1px solid #00FFCC; }
+    </style>
+</head>
+<body>
 
-        .container {
-            width: 100%;
-            max-width: 500px;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 15px;
-            background: var(--panel-bg);
-            border-radius: 12px;
-            border: 1px solid #333;
-        }
-
-        h1 {
-            margin: 0;
-            font-size: 1rem;
-            color: var(--libre-cyan);
-        }
+<div class="container">
+    <header>
+        <h1>Gravity Simulator 2.1 <span id="sync-status" class="sync-indicator">OFFLINE</span></h1>
+        <div id="clock" class="time-display">00:00</div>
+    </header>
 
         .time-display {
             font-family: 'Courier New', Courier, monospace;
@@ -370,37 +350,63 @@
     }
 
     // --- CLOUD SYNC (GUN.js) ---
-    const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
-    const cloudState = gun.get('gravity-glucose-sync-v1');
+    // Usamos múltiples repetidores para mayor estabilidad
+    const gun = Gun([
+        'https://gun-manhattan.herokuapp.com/gun',
+        'https://peer.wall.org/gun',
+        'https://gundb-relay.herokuapp.com/gun'
+    ]);
+    
+    // Llave única para tu proyecto
+    const cloud = gun.get('miguel-gravity-glucose-v2-1');
+    let lastRemoteUpdate = 0;
 
     function syncToCloud() {
-        cloudState.put({
+        const now = Date.now();
+        cloud.put({
             G: patient.G,
             I: patient.I,
             X: patient.X,
-            time: time
+            time: time,
+            timestamp: now
         });
+        document.getElementById('sync-status').innerText = "SYNCED";
+        document.getElementById('sync-status').classList.add('sync-online');
     }
 
-    cloudState.on((data) => {
-        if (data.time > time + 2 || data.time < time - 2) {
-            // Solo sincronizar si hay una diferencia significativa de tiempo o valores
-            // para evitar loops infinitos si dos dispositivos intentan liderar.
-            // En un entorno multi-dispositivo, uno suele ser el "reloj".
+    cloud.on((data) => {
+        if (!data) return;
+        
+        // Solo aceptamos la actualización si es más reciente que la nuestra
+        // y si los valores son significativamente diferentes
+        const isNewer = data.timestamp > lastRemoteUpdate;
+        
+        if (isNewer) {
+            lastRemoteUpdate = data.timestamp;
+            
+            if (Math.abs(data.G - patient.G) > 1) {
+                patient.G = data.G;
+            }
+            if (Math.abs(data.I - patient.I) > 1) {
+                patient.I = data.I;
+            }
+            patient.X = data.X;
+            // Solo sincronizamos el tiempo si la diferencia es grande
+            if (Math.abs(data.time - time) > 10) {
+                time = data.time;
+            }
+            
+            document.getElementById('sync-status').innerText = "ONLINE";
+            document.getElementById('sync-status').classList.add('sync-online');
         }
-        // Para simplificar, permitiremos que cualquier cambio en G o I desde otro lado se aplique
-        if (Math.abs(data.G - patient.G) > 2) patient.G = data.G;
-        if (Math.abs(data.I - patient.I) > 2) patient.I = data.I;
-        patient.X = data.X;
-        // time = data.time; // Sincronizar el reloj puede ser caótico, lo dejamos local
     });
 
     function loop() {
         time += 1;
         patient.step(time, 1);
         
-        // Cada 5 segundos sincronizamos el estado local a la nube
-        if (time % 5 === 0) syncToCloud();
+        // Cada 10 ticks (10 seg en tiempo real) sincronizamos
+        if (time % 10 === 0) syncToCloud();
         const h = Math.floor(time / 60).toString().padStart(2, '0');
         const m = Math.floor(time % 60).toString().padStart(2, '0');
         document.getElementById('clock').innerText = `${h}:${m}`;
