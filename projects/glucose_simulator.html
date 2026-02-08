@@ -6,6 +6,7 @@
     <title>Antigravity Glucose Simulator v2.0</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
     <style>
         :root {
             --bg-color: #0b0e11;
@@ -368,10 +369,38 @@
         });
     }
 
+    // --- CLOUD SYNC (GUN.js) ---
+    const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
+    const cloudState = gun.get('gravity-glucose-sync-v1');
+
+    function syncToCloud() {
+        cloudState.put({
+            G: patient.G,
+            I: patient.I,
+            X: patient.X,
+            time: time
+        });
+    }
+
+    cloudState.on((data) => {
+        if (data.time > time + 2 || data.time < time - 2) {
+            // Solo sincronizar si hay una diferencia significativa de tiempo o valores
+            // para evitar loops infinitos si dos dispositivos intentan liderar.
+            // En un entorno multi-dispositivo, uno suele ser el "reloj".
+        }
+        // Para simplificar, permitiremos que cualquier cambio en G o I desde otro lado se aplique
+        if (Math.abs(data.G - patient.G) > 2) patient.G = data.G;
+        if (Math.abs(data.I - patient.I) > 2) patient.I = data.I;
+        patient.X = data.X;
+        // time = data.time; // Sincronizar el reloj puede ser caótico, lo dejamos local
+    });
+
     function loop() {
         time += 1;
         patient.step(time, 1);
         
+        // Cada 5 segundos sincronizamos el estado local a la nube
+        if (time % 5 === 0) syncToCloud();
         const h = Math.floor(time / 60).toString().padStart(2, '0');
         const m = Math.floor(time % 60).toString().padStart(2, '0');
         document.getElementById('clock').innerText = `${h}:${m}`;
