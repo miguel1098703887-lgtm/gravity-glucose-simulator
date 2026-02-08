@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gravity Glucose Simulator v3.1 [LIVE]</title>
+    <title>Gravity Glucose Simulator v3.2 [STABLE]</title>
     
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
@@ -56,7 +56,6 @@
             border-right: 1px solid var(--border-color);
         }
 
-        /* Header */
         header {
             padding: 20px 24px;
             display: flex;
@@ -66,11 +65,6 @@
             background: rgba(0,0,0,0.8);
             backdrop-filter: blur(10px);
             z-index: 10;
-        }
-
-        .brand {
-            display: flex;
-            flex-direction: column;
         }
 
         .brand h1 {
@@ -105,7 +99,6 @@
             font-weight: 500;
         }
 
-        /* Main Glucose Display */
         .glucose-card {
             padding: 40px 24px;
             text-align: center;
@@ -128,7 +121,6 @@
             display: flex;
             align-items: baseline;
             justify-content: center;
-            position: relative;
         }
 
         .glucose-value {
@@ -137,7 +129,6 @@
             line-height: 1;
             color: var(--accent-color);
             text-shadow: 0 0 30px var(--accent-glow);
-            transition: color 0.5s ease;
         }
 
         .glucose-unit-arrow {
@@ -147,17 +138,8 @@
             margin-left: 12px;
         }
 
-        .trend-arrow {
-            font-size: 40px;
-            line-height: 1;
-            color: var(--accent-color);
-        }
-
-        .unit {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--text-secondary);
-        }
+        .trend-arrow { font-size: 40px; line-height: 1; color: var(--accent-color); }
+        .unit { font-size: 14px; font-weight: 600; color: var(--text-secondary); }
 
         .ai-status-msg {
             margin-top: 16px;
@@ -168,7 +150,6 @@
             background: rgba(255,255,255,0.05);
         }
 
-        /* Metrics Row */
         .metrics-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -182,25 +163,12 @@
             padding: 16px;
             border-radius: 16px;
             border: 1px solid var(--border-color);
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
+            text-align: center;
         }
 
-        .metric-tile .m-label {
-            font-size: 10px;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            font-weight: 700;
-        }
+        .m-label { font-size: 10px; color: var(--text-secondary); text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 4px;}
+        .m-value { font-size: 18px; font-weight: 600; }
 
-        .metric-tile .m-value {
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-
-        /* Chart Area */
         .chart-section {
             flex: 1;
             padding: 0 12px;
@@ -215,27 +183,23 @@
             border-radius: 20px;
             padding: 16px;
             border: 1px solid var(--border-color);
-            position: relative;
         }
 
-        /* Logs */
         .log-section {
-            height: 80px;
+            height: 60px;
             margin: 12px 24px;
-            padding: 10px;
+            padding: 8px;
             background: #0a0a0a;
             border-radius: 12px;
             border: 1px solid #222;
             overflow-y: auto;
             font-family: 'JetBrains Mono', monospace;
-            font-size: 10px;
-            color: #555;
+            font-size: 9px;
+            color: #444;
         }
 
-        /* Controls Area */
         .controls-panel {
-            padding: 24px;
-            padding-top: 12px;
+            padding: 20px 24px;
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 12px;
@@ -244,59 +208,35 @@
         }
 
         button {
-            height: 52px;
-            border-radius: 14px;
+            height: 48px;
+            border-radius: 12px;
             border: none;
             font-family: inherit;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 700;
             cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
+            transition: all 0.2s;
         }
-
-        button:active { transform: scale(0.96); opacity: 0.8; }
 
         .btn-carbs { background: #3a2a1d; color: #ff9500; }
         .btn-pizza { background: #2c1c1c; color: #ff3b30; }
         .btn-insulin { background: rgba(0, 255, 204, 0.1); color: var(--accent-color); border: 1px solid var(--accent-color); }
-        .btn-reset { background: var(--border-color); color: var(--text-secondary); }
-
+        
         .footer-settings {
             grid-column: span 2;
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-top: 8px;
-            padding: 0 4px;
         }
 
-        .speed-wrapper {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 11px;
-            color: var(--text-secondary);
-        }
-
-        select {
-            background: var(--surface-color);
-            color: white;
-            border: 1px solid var(--border-color);
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-size: 11px;
-            outline: none;
-        }
-
-        /* Mobile specific adjustments */
+        .speed-wrapper { font-size: 10px; color: var(--text-secondary); display: flex; align-items: center; gap: 8px; }
+        select { background: #1a1a1a; color: white; border: 1px solid #333; padding: 2px 4px; border-radius: 4px; font-size: 10px; }
+        
         @media (max-height: 700px) {
-            .glucose-card { padding: 20px 24px; }
-            .glucose-value { font-size: 80px; }
-            button { height: 44px; }
+            .glucose-card { padding: 20px; }
+            .glucose-value { font-size: 70px; }
+            .metrics-row { margin-bottom: 10px; }
         }
     </style>
 </head>
@@ -305,14 +245,14 @@
 <div class="app-container">
     <header>
         <div class="brand">
-            <h1>Gravity Simulator <span style="font-weight:300">v3.0</span></h1>
-            <div id="sync-status" class="sync-badge">OFFLINE</div>
+            <h1>Gravity Sim <span style="font-weight:300">v3.2</span></h1>
+            <div id="sync-status" class="sync-badge">CONNECTING...</div>
         </div>
         <div id="clock" class="clock">00:00</div>
     </header>
 
-    <div class="glucose-card" id="main-frame">
-        <div class="label-main">Nivel de Glucosa</div>
+    <div class="glucose-card">
+        <div class="label-main">Glucemia Actual</div>
         <div class="glucose-value-container">
             <div id="glucose-val" class="glucose-value">--</div>
             <div class="glucose-unit-arrow">
@@ -320,16 +260,16 @@
                 <span class="unit">mg/dL</span>
             </div>
         </div>
-        <div id="ai-status" class="ai-status-msg">Calibrando sistema...</div>
+        <div id="ai-status" class="ai-status-msg">Iniciando motor biológico...</div>
     </div>
 
     <div class="metrics-row">
         <div class="metric-tile">
-            <span class="m-label">Insulina Activa (IOB)</span>
+            <span class="m-label">IOB (Activa)</span>
             <span id="val-iob" class="m-value">0.00 U</span>
         </div>
         <div class="metric-tile">
-            <span class="m-label">Predicción 30 min</span>
+            <span class="m-label">Proyección 30m</span>
             <span id="val-pred" class="m-value">--</span>
         </div>
     </div>
@@ -352,18 +292,18 @@
             <div class="speed-wrapper">
                 <span>VELOCIDAD</span>
                 <select id="speed-sel" onchange="updateSpeed()">
-                    <option value="1000" selected>1s = 1m</option>
-                    <option value="200">5x Rápido</option>
-                    <option value="50">20x Turbo</option>
+                    <option value="1000" selected>1s=1m</option>
+                    <option value="200">5x</option>
+                    <option value="50">20x</option>
                 </select>
             </div>
-            <button class="btn-reset" onclick="resetSim()" style="height:30px; width:60px; font-size:10px; border-radius:8px;">RESET</button>
+            <button onclick="resetSim()" style="background:none; color:#444; border:none; font-size:10px; cursor:pointer;">RESET</button>
         </div>
     </div>
 </div>
 
 <script>
-    // --- PHYSIOLOGY ENGINE ---
+    // --- ENGINE ---
     const GB_BASE = 110.0;
     const IB_BASE = 15.0;
     const P1 = 0.01;
@@ -371,171 +311,85 @@
     const P3_BASE = 0.00005;
 
     class Meal {
-        constructor(carbs, time, type) {
-            this.carbs = carbs;
-            this.time = time;
-            this.type = type;
-        }
+        constructor(carbs, time, type) { this.carbs = carbs; this.time = time; this.type = type; }
         getRate(t) {
             const dt = t - this.time;
             if (dt < 0) return 0;
             const totalRise = this.carbs * 8.5;
-            if (this.type === 'simple') {
-                const beta = 1.0 / 45.0;
-                return totalRise * (beta**2) * dt * Math.exp(-beta * dt);
-            } else {
-                const beta = 1.0 / 140.0;
-                return totalRise * (beta**2) * dt * Math.exp(-beta * dt);
-            }
+            const beta = (this.type === 'simple') ? (1.0/45.0) : (1.0/140.0);
+            return totalRise * (beta**2) * dt * Math.exp(-beta * dt);
         }
     }
 
     class Patient {
         constructor() { this.reset(); }
         reset() {
-            this.G = GB_BASE;
-            this.I = IB_BASE;
-            this.X = 0;
-            this.meals = [];
-            this.history = [];
+            this.G = GB_BASE; this.I = IB_BASE; this.X = 0;
+            this.meals = []; this.history = [];
         }
         step(t, dt) {
             const isDawn = t >= 240 && t <= 480;
             let currentP3 = P3_BASE;
             if (isDawn) currentP3 *= 0.65;
-
             let Ra = 0;
             this.meals.forEach(m => Ra += m.getRate(t));
-
             let secretion = (this.G > 100) ? (this.G - 100) * 0.45 : 0;
             const targetI = IB_BASE + secretion;
             this.I += (targetI - this.I) * 0.12 * dt;
             this.X += (-P2 * this.X + currentP3 * (this.I - IB_BASE)) * dt;
-
             const dG = -(P1 + this.X) * this.G + (P1 * GB_BASE) + Ra;
             this.G += dG * dt;
-            
             if (this.G < 15) this.G = 15;
             if (this.G > 600) this.G = 600;
         }
     }
 
-    // --- CLOUD SYNC (GUN.js) ---
-    const gun = Gun([
-        'https://gun-manhattan.herokuapp.com/gun',
-        'https://peer.wall.org/gun'
-    ]);
-    const cloud = gun.get('miguel-gravity-glucose-v3-0');
-    let lastRemoteUpdate = 0;
+    // --- CLOUD SYNC ---
+    const gun = Gun(['https://gun-manhattan.herokuapp.com/gun', 'https://peer.wall.org/gun']);
+    const cloud = gun.get('gravity-v3-2-stable');
+    let lastInboundTs = 0;
 
-    function syncToCloud() {
-        cloud.put({
-            G: patient.G, I: patient.I, X: patient.X,
-            time: time, ts: Date.now()
-        });
-        const badge = document.getElementById('sync-status');
-        badge.innerText = "SYNCED";
-        badge.className = "sync-badge online";
+    function syncOut() {
+        cloud.put({ G: patient.G, I: patient.I, X: patient.X, ts: Date.now() });
+        const b = document.getElementById('sync-status');
+        b.innerText = "SYNCED"; b.classList.add('online');
     }
 
-    cloud.on((data) => {
-        if (!data || data.ts <= lastRemoteUpdate) return;
-        lastRemoteUpdate = data.ts;
-        if (Math.abs(data.G - patient.G) > 1.5) patient.G = data.G;
-        if (Math.abs(data.I - patient.I) > 1.5) patient.I = data.I;
+    cloud.on(data => {
+        if (!data || data.ts <= lastInboundTs) return;
+        lastInboundTs = data.ts;
+        if (Math.abs(data.G - patient.G) > 2) patient.G = data.G;
+        if (Math.abs(data.I - patient.I) > 2) patient.I = data.I;
         patient.X = data.X;
-        if (Math.abs(data.time - time) > 15) time = data.time;
-        
-        const badge = document.getElementById('sync-status');
-        badge.innerText = "ONLINE";
-        badge.className = "sync-badge online";
+        const b = document.getElementById('sync-status');
+        b.innerText = "ONLINE"; b.classList.add('online');
     });
 
-    // --- APP LOGIC ---
+    // --- LOGIC ---
     const patient = new Patient();
-    let time = 0;
-    let speed = 1000;
-    let timerId = null;
-    let chart = null;
+    let time = 0; let speed = 1000; let timerId = null; let chart = null;
 
     function addLog(msg) {
         const log = document.getElementById('log');
         const h = Math.floor(time / 60).toString().padStart(2, '0');
         const m = Math.floor(time % 60).toString().padStart(2, '0');
-        const div = document.createElement('div');
-        div.innerText = `[${h}:${m}] ${msg}`;
-        log.prepend(div);
+        log.innerHTML = `<div>[${h}:${m}] ${msg}</div>` + log.innerHTML;
     }
 
-    function addMeal(carbs, type) {
-        patient.meals.push(new Meal(carbs, time, type));
-        addLog(`+${carbs}g Carbs (${type})`);
-        syncToCloud();
-    }
-
-    function addInsulin(units) {
-        patient.I += units * 12.5;
-        addLog(`+${units}u Insulina`);
-        syncToCloud();
-    }
-
-    function updateSpeed() {
-        speed = parseInt(document.getElementById('speed-sel').value);
-        clearTimeout(timerId);
-        loop();
-    }
-
-    function resetSim() {
-        time = 0;
-        patient.reset();
-        chart.data.labels = [];
-        chart.data.datasets[0].data = [];
-        chart.update();
-        document.getElementById('log').innerHTML = '';
-        addLog("Simulador reiniciado.");
-        syncToCloud();
-    }
+    function addMeal(c, t) { patient.meals.push(new Meal(c, time, t)); addLog(`+${c}g Carbs`); syncOut(); }
+    function addInsulin(u) { patient.I += u * 12.5; addLog(`+${u}u Insulina`); syncOut(); }
+    function updateSpeed() { speed = parseInt(document.getElementById('speed-sel').value); clearTimeout(timerId); loop(); }
+    function resetSim() { time = 0; patient.reset(); chart.data.labels = []; chart.data.datasets[0].data = []; chart.update(); addLog("Reset."); syncOut(); }
 
     function initChart() {
         const ctx = document.getElementById('mainChart').getContext('2d');
         chart = new Chart(ctx, {
             type: 'line',
-            data: {
-                labels: [],
-                datasets: [{
-                    data: [],
-                    borderColor: '#00FFCC',
-                    backgroundColor: 'rgba(0, 255, 204, 0.05)',
-                    borderWidth: 3,
-                    pointRadius: 0,
-                    tension: 0.4,
-                    fill: true
-                }]
-            },
+            data: { labels: [], datasets: [{ data: [], borderColor: '#00FFCC', backgroundColor: 'rgba(0, 255, 204, 0.05)', borderWidth: 3, pointRadius: 0, tension: 0.4, fill: true }] },
             options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    x: { display: false },
-                    y: { 
-                        min: 0, max: 400, 
-                        grid: { color: '#222', drawBorder: false },
-                        ticks: { color: '#666', font: { size: 10 } }
-                    }
-                },
-                plugins: {
-                    legend: { display: false },
-                    annotation: {
-                        annotations: {
-                            target: {
-                                type: 'box', yMin: 70, yMax: 140,
-                                backgroundColor: 'rgba(0, 255, 100, 0.03)', borderWidth: 0
-                            },
-                            limitLow: { type: 'line', yMin: 70, yMax: 70, borderColor: '#333', borderWidth: 1, borderDash: [5,5] },
-                            limitHigh: { type: 'line', yMin: 180, yMax: 180, borderColor: '#333', borderWidth: 1, borderDash: [5,5] }
-                        }
-                    }
-                }
+                responsive: true, maintainAspectRatio: false,
+                scales: { x: { display: false }, y: { min: 0, max: 400, grid: { color: '#222', drawBorder: false }, ticks: { color: '#444', font: { size: 9 } } } },
+                plugins: { legend: { display: false }, annotation: { annotations: { t: { type: 'box', yMin: 70, yMax: 140, backgroundColor: 'rgba(0, 255, 100, 0.02)', borderWidth: 0 } } } }
             }
         });
     }
@@ -552,54 +406,33 @@
         const elVal = document.getElementById('glucose-val');
         elVal.innerText = gVal;
         
-        const iob = Math.max(0, (patient.I - IB_BASE) / 10).toFixed(2);
-        document.getElementById('val-iob').innerText = `${iob} U`;
+        document.getElementById('val-iob').innerText = `${Math.max(0, (patient.I - IB_BASE) / 10).toFixed(2)} U`;
 
         const aiStatus = document.getElementById('ai-status');
-        if (gVal < 70) {
-            aiStatus.innerText = "🚨 ALERTA: HIPOGLUCEMIA";
-            aiStatus.style.color = "var(--danger-color)";
-            elVal.style.color = "var(--danger-color)";
-        } else if (gVal > 180) {
-            aiStatus.innerText = "⚠️ ALERTA: HIPERGLUCEMIA";
-            aiStatus.style.color = "var(--warning-color)";
-            elVal.style.color = "var(--warning-color)";
-        } else {
-            aiStatus.innerText = "✅ ESTADO: ÓPTIMO";
-            aiStatus.style.color = "var(--accent-color)";
-            elVal.style.color = "var(--accent-color)";
-        }
+        if (gVal < 70) { aiStatus.innerText = "🚨 HIPOGLUCEMIA"; aiStatus.style.color = "var(--danger-color)"; elVal.style.color = "var(--danger-color)"; }
+        else if (gVal > 180) { aiStatus.innerText = "⚠️ HIPERGLUCEMIA"; aiStatus.style.color = "var(--warning-color)"; elVal.style.color = "var(--warning-color)"; }
+        else { aiStatus.innerText = "✅ ESTADO ÓPTIMO"; aiStatus.style.color = "var(--accent-color)"; elVal.style.color = "var(--accent-color)"; }
 
         const lastG = patient.history[patient.history.length - 1] || patient.G;
         const diff = patient.G - lastG;
-        const trend = document.getElementById('trend-arrow');
-        if (diff > 1.2) trend.innerText = "↑";
-        else if (diff > 0.4) trend.innerText = "↗";
-        else if (diff < -1.2) trend.innerText = "↓";
-        else if (diff < -0.4) trend.innerText = "↘";
-        else trend.innerText = "→";
-        trend.style.color = elVal.style.color;
+        const tr = document.getElementById('trend-arrow');
+        if (diff > 1.2) tr.innerText = "↑"; else if (diff > 0.4) tr.innerText = "↗";
+        else if (diff < -1.2) tr.innerText = "↓"; else if (diff < -0.4) tr.innerText = "↘";
+        else tr.innerText = "→";
+        tr.style.color = elVal.style.color;
 
-        const pred = Math.round(patient.G + (diff * 30));
-        document.getElementById('val-pred').innerText = `${pred} mg/dL`;
+        document.getElementById('val-pred').innerText = `${Math.round(patient.G + (diff * 30))} mg/dL`;
 
         patient.history.push(patient.G);
-        chart.data.labels.push("");
-        chart.data.datasets[0].data.push(patient.G);
-        if (chart.data.labels.length > 200) {
-            chart.data.labels.shift();
-            chart.data.datasets[0].data.shift();
-        }
+        chart.data.labels.push(""); chart.data.datasets[0].data.push(patient.G);
+        if (chart.data.labels.length > 200) { chart.data.labels.shift(); chart.data.datasets[0].data.shift(); }
         chart.update('none');
 
-        if (time % 10 === 0) syncToCloud();
+        if (time % 10 === 0) syncOut();
         timerId = setTimeout(loop, speed);
     }
 
-    window.onload = () => {
-        initChart();
-        loop();
-    };
+    window.onload = () => { initChart(); loop(); };
 </script>
 
 </body>
