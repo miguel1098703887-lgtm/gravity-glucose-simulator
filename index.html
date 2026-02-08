@@ -2,199 +2,362 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Antigravity Glucose Simulator v2.0</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Gravity Glucose Simulator v3.0</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+    
+    <!-- External Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+    
     <style>
         :root {
-            --bg-color: #0b0e11;
-            --card-bg: #15191d;
-            --panel-bg: #1e2329;
-            --text-main: #eaecef;
-            --text-muted: #848e9c;
-            --libre-cyan: #00FFCC;
-            --blood-red: #f6465d;
-            --zone-green: rgba(2, 192, 118, 0.15);
-            --accent: #2979ff;
-            --high: #f0b90b;
+            --bg-color: #000000;
+            --surface-color: #121212;
+            --panel-color: #1c1c1e;
+            --accent-color: #00FFCC;
+            --accent-glow: rgba(0, 255, 204, 0.3);
+            --danger-color: #ff3b30;
+            --warning-color: #ffcc00;
+            --text-primary: #ffffff;
+            --text-secondary: #8e8e93;
+            --border-color: #2c2c2e;
         }
-        /* ... existing styles ... */
-        .sync-indicator {
-            font-size: 0.6rem;
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: 'Inter', -apple-system, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 480px;
+            background: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            border-left: 1px solid var(--border-color);
+            border-right: 1px solid var(--border-color);
+        }
+
+        /* Header */
+        header {
+            padding: 20px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(10px);
+            z-index: 10;
+        }
+
+        .brand {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .brand h1 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            color: var(--accent-color);
+            text-transform: uppercase;
+        }
+
+        .sync-badge {
+            font-size: 9px;
             padding: 2px 6px;
             border-radius: 4px;
-            background: #333;
-            color: #888;
-        }
-        .sync-online { color: #00FFCC; border: 1px solid #00FFCC; }
-    </style>
-</head>
-<body>
-
-<div class="container">
-    <header>
-        <h1>Gravity Simulator 2.2 <span id="sync-status" class="sync-indicator">OFFLINE</span></h1>
-        <div id="clock" class="time-display">00:00</div>
-    </header>
-
-        .time-display {
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 1.2rem;
+            background: var(--border-color);
+            color: var(--text-secondary);
             font-weight: bold;
-            color: #fff;
+            margin-top: 4px;
+            width: fit-content;
         }
 
-        .main-display {
-            background: var(--card-bg);
-            padding: 20px;
-            border-radius: 20px;
+        .sync-badge.online {
+            color: var(--accent-color);
+            background: rgba(0, 255, 204, 0.1);
+            border: 1px solid var(--accent-color);
+        }
+
+        .clock {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 20px;
+            font-weight: 500;
+        }
+
+        /* Main Glucose Display */
+        .glucose-card {
+            padding: 40px 24px;
             text-align: center;
-            border: 1px solid #222;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: radial-gradient(circle at center, #1a1a1a 0%, #000 100%);
+        }
+
+        .label-main {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .glucose-value-container {
+            display: flex;
+            align-items: baseline;
+            justify-content: center;
             position: relative;
         }
 
-        .big-number {
-            font-size: 5rem;
+        .glucose-value {
+            font-size: 100px;
             font-weight: 800;
-            color: var(--libre-cyan);
             line-height: 1;
-            margin: 10px 0;
+            color: var(--accent-color);
+            text-shadow: 0 0 30px var(--accent-glow);
+            transition: color 0.5s ease;
         }
 
-        .unit { color: var(--text-muted); font-size: 1rem; }
-        .trend-arrow { font-size: 2.5rem; color: var(--libre-cyan); margin-left: 10px; }
+        .glucose-unit-arrow {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            margin-left: 12px;
+        }
 
-        .metrics-bar {
+        .trend-arrow {
+            font-size: 40px;
+            line-height: 1;
+            color: var(--accent-color);
+        }
+
+        .unit {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .ai-status-msg {
+            margin-top: 16px;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 6px 16px;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.05);
+        }
+
+        /* Metrics Row */
+        .metrics-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10px;
+            gap: 12px;
+            padding: 0 24px;
+            margin-bottom: 20px;
         }
 
-        .metric-item {
-            background: var(--panel-bg);
-            padding: 10px;
-            border-radius: 10px;
-            text-align: center;
+        .metric-tile {
+            background: var(--surface-color);
+            padding: 16px;
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
         }
 
-        .label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; }
-        .value { font-size: 1.1rem; font-weight: bold; }
+        .metric-tile .m-label {
+            font-size: 10px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        .metric-tile .m-value {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* Chart Area */
+        .chart-section {
+            flex: 1;
+            padding: 0 12px;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+        }
 
         .chart-container {
             flex: 1;
-            background: var(--card-bg);
-            border-radius: 15px;
-            padding: 10px;
-            border: 1px solid #222;
-            min-height: 200px;
+            background: var(--surface-color);
+            border-radius: 20px;
+            padding: 16px;
+            border: 1px solid var(--border-color);
+            position: relative;
         }
 
-        .controls {
+        /* Logs */
+        .log-section {
+            height: 80px;
+            margin: 12px 24px;
+            padding: 10px;
+            background: #0a0a0a;
+            border-radius: 12px;
+            border: 1px solid #222;
+            overflow-y: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            color: #555;
+        }
+
+        /* Controls Area */
+        .controls-panel {
+            padding: 24px;
+            padding-top: 12px;
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            padding-bottom: 20px;
+            gap: 12px;
+            background: var(--bg-color);
+            border-top: 1px solid var(--border-color);
         }
 
         button {
-            background: #2b3139;
-            color: white;
+            height: 52px;
+            border-radius: 14px;
             border: none;
-            padding: 12px;
-            border-radius: 8px;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 700;
             cursor: pointer;
-            font-weight: 600;
-            font-size: 0.85rem;
-            transition: all 0.2s;
-        }
-
-        button:active { transform: scale(0.95); }
-        button.primary { background: var(--libre-cyan); color: #000; }
-        button.danger { background: var(--blood-red); color: #fff; }
-
-        .speed-control {
-            grid-column: span 2;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            margin-top: 5px;
+            gap: 8px;
+        }
+
+        button:active { transform: scale(0.96); opacity: 0.8; }
+
+        .btn-carbs { background: #3a2a1d; color: #ff9500; }
+        .btn-pizza { background: #2c1c1c; color: #ff3b30; }
+        .btn-insulin { background: rgba(0, 255, 204, 0.1); color: var(--accent-color); border: 1px solid var(--accent-color); }
+        .btn-reset { background: var(--border-color); color: var(--text-secondary); }
+
+        .footer-settings {
+            grid-column: span 2;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 8px;
+            padding: 0 4px;
+        }
+
+        .speed-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            color: var(--text-secondary);
         }
 
         select {
-            background: #2b3139;
+            background: var(--surface-color);
             color: white;
-            border: 1px solid #444;
-            padding: 5px;
-            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            outline: none;
         }
 
-        .event-log {
-            height: 80px;
-            overflow-y: auto;
-            background: #000;
-            border-radius: 8px;
-            padding: 8px;
-            font-family: monospace;
-            font-size: 0.75rem;
-            color: #888;
-            border: 1px solid #333;
+        /* Mobile specific adjustments */
+        @media (max-height: 700px) {
+            .glucose-card { padding: 20px 24px; }
+            .glucose-value { font-size: 80px; }
+            button { height: 44px; }
         }
     </style>
 </head>
 <body>
 
-<div class="container">
+<div class="app-container">
     <header>
-        <h1>Gravity Simulator 2.0</h1>
-        <div id="clock" class="time-display">00:00</div>
+        <div class="brand">
+            <h1>Gravity Simulator <span style="font-weight:300">v3.0</span></h1>
+            <div id="sync-status" class="sync-badge">OFFLINE</div>
+        </div>
+        <div id="clock" class="clock">00:00</div>
     </header>
 
-    <div class="main-display" id="bg-display">
-        <div class="label">Glucosa en tiempo real</div>
-        <div class="big-number" id="glucose-val">--</div>
-        <div>
-            <span class="trend-arrow" id="trend-arrow">→</span>
-            <span class="unit">mg/dL</span>
+    <div class="glucose-card" id="main-frame">
+        <div class="label-main">Nivel de Glucosa</div>
+        <div class="glucose-value-container">
+            <div id="glucose-val" class="glucose-value">--</div>
+            <div class="glucose-unit-arrow">
+                <span id="trend-arrow" class="trend-arrow">→</span>
+                <span class="unit">mg/dL</span>
+            </div>
         </div>
-        <div id="ai-status" style="margin-top: 10px; font-size: 0.8rem; font-weight: bold;">Iniciando...</div>
+        <div id="ai-status" class="ai-status-msg">Calibrando sistema...</div>
     </div>
 
-    <div class="metrics-bar">
-        <div class="metric-item">
-            <div class="label">Insulina Activa (IOB)</div>
-            <div class="value" id="val-iob">0.00 U</div>
+    <div class="metrics-row">
+        <div class="metric-tile">
+            <span class="m-label">Insulina Activa (IOB)</span>
+            <span id="val-iob" class="m-value">0.00 U</span>
         </div>
-        <div class="metric-item">
-            <div class="label">Predicción 30m</div>
-            <div class="value" id="val-pred">--</div>
+        <div class="metric-tile">
+            <span class="m-label">Predicción 30 min</span>
+            <span id="val-pred" class="m-value">--</span>
         </div>
     </div>
 
-    <div class="chart-container">
-        <canvas id="mainChart"></canvas>
+    <div class="chart-section">
+        <div class="chart-container">
+            <canvas id="mainChart"></canvas>
+        </div>
     </div>
 
-    <div class="event-log" id="log"></div>
+    <div id="log" class="log-section"></div>
 
-    <div class="controls">
-        <button onclick="addMeal(30, 'simple')">🍎 +30g Carbs</button>
-        <button onclick="addMeal(90, 'pizza')">🍕 Pizza (90g)</button>
-        <button class="primary" onclick="addInsulin(2)">💉 +2u Insulina</button>
-        <button class="danger" onclick="addInsulin(10)">💉 +10u Bolo</button>
+    <div class="controls-panel">
+        <button class="btn-carbs" onclick="addMeal(30, 'simple')">🍎 +30g Carbs</button>
+        <button class="btn-pizza" onclick="addMeal(90, 'pizza')">🍕 Pizza (90g)</button>
+        <button class="btn-insulin" onclick="addInsulin(2)">💉 +2u Insulina</button>
+        <button class="btn-insulin" onclick="addInsulin(10)" style="font-weight:900">+10u Bolo</button>
         
-        <div class="speed-control">
-            Velocidad:
-            <select id="speed-sel" onchange="updateSpeed()">
-                <option value="1000">Tiempo Real (1s=1m)</option>
-                <option value="200">Rápido (5x)</option>
-                <option value="50">Turbo (20x)</option>
-            </select>
-            <button onclick="resetSim()" style="padding: 5px 10px;">Reset</button>
+        <div class="footer-settings">
+            <div class="speed-wrapper">
+                <span>VELOCIDAD</span>
+                <select id="speed-sel" onchange="updateSpeed()">
+                    <option value="1000" selected>1s = 1m</option>
+                    <option value="200">5x Rápido</option>
+                    <option value="50">20x Turbo</option>
+                </select>
+            </div>
+            <button class="btn-reset" onclick="resetSim()" style="height:30px; width:60px; font-size:10px; border-radius:8px;">RESET</button>
         </div>
     </div>
 </div>
@@ -216,22 +379,19 @@
         getRate(t) {
             const dt = t - this.time;
             if (dt < 0) return 0;
-            const totalRise = this.carbs * 8.0;
+            const totalRise = this.carbs * 8.5;
             if (this.type === 'simple') {
-                const beta = 1.0 / 40.0;
+                const beta = 1.0 / 45.0;
                 return totalRise * (beta**2) * dt * Math.exp(-beta * dt);
             } else {
-                // Pizza: double peak or slower absorption
-                const beta = 1.0 / 120.0;
+                const beta = 1.0 / 140.0;
                 return totalRise * (beta**2) * dt * Math.exp(-beta * dt);
             }
         }
     }
 
     class Patient {
-        constructor() {
-            this.reset();
-        }
+        constructor() { this.reset(); }
         reset() {
             this.G = GB_BASE;
             this.I = IB_BASE;
@@ -240,37 +400,60 @@
             this.history = [];
         }
         step(t, dt) {
-            // Dawn phenomenon (04:00 - 08:00)
             const isDawn = t >= 240 && t <= 480;
             let currentP3 = P3_BASE;
-            if (isDawn) currentP3 *= 0.6; // Reduced insulin sensitivity
+            if (isDawn) currentP3 *= 0.65;
 
-            // Carb absorption rate
             let Ra = 0;
             this.meals.forEach(m => Ra += m.getRate(t));
 
-            // Pancreas endogenous secretion
-            let secretion = (this.G > 100) ? (this.G - 100) * 0.4 : 0;
-            
-            // Insulin dynamics
+            let secretion = (this.G > 100) ? (this.G - 100) * 0.45 : 0;
             const targetI = IB_BASE + secretion;
-            this.I += (targetI - this.I) * 0.1 * dt;
-
-            // Insulin action (Remote)
+            this.I += (targetI - this.I) * 0.12 * dt;
             this.X += (-P2 * this.X + currentP3 * (this.I - IB_BASE)) * dt;
 
-            // Glucose change
             const dG = -(P1 + this.X) * this.G + (P1 * GB_BASE) + Ra;
             this.G += dG * dt;
             
-            if (this.G < 20) this.G = 20;
-            if (this.G > 500) this.G = 500;
+            if (this.G < 15) this.G = 15;
+            if (this.G > 600) this.G = 600;
         }
     }
 
+    // --- CLOUD SYNC (GUN.js) ---
+    const gun = Gun([
+        'https://gun-manhattan.herokuapp.com/gun',
+        'https://peer.wall.org/gun'
+    ]);
+    const cloud = gun.get('miguel-gravity-glucose-v3-0');
+    let lastRemoteUpdate = 0;
+
+    function syncToCloud() {
+        cloud.put({
+            G: patient.G, I: patient.I, X: patient.X,
+            time: time, ts: Date.now()
+        });
+        const badge = document.getElementById('sync-status');
+        badge.innerText = "SYNCED";
+        badge.className = "sync-badge online";
+    }
+
+    cloud.on((data) => {
+        if (!data || data.ts <= lastRemoteUpdate) return;
+        lastRemoteUpdate = data.ts;
+        if (Math.abs(data.G - patient.G) > 1.5) patient.G = data.G;
+        if (Math.abs(data.I - patient.I) > 1.5) patient.I = data.I;
+        patient.X = data.X;
+        if (Math.abs(data.time - time) > 15) time = data.time;
+        
+        const badge = document.getElementById('sync-status');
+        badge.innerText = "ONLINE";
+        badge.className = "sync-badge online";
+    });
+
     // --- APP LOGIC ---
     const patient = new Patient();
-    let time = 0; // minutes
+    let time = 0;
     let speed = 1000;
     let timerId = null;
     let chart = null;
@@ -279,17 +462,21 @@
         const log = document.getElementById('log');
         const h = Math.floor(time / 60).toString().padStart(2, '0');
         const m = Math.floor(time % 60).toString().padStart(2, '0');
-        log.innerHTML = `<div>[${h}:${m}] ${msg}</div>` + log.innerHTML;
+        const div = document.createElement('div');
+        div.innerText = `[${h}:${m}] ${msg}`;
+        log.prepend(div);
     }
 
     function addMeal(carbs, type) {
         patient.meals.push(new Meal(carbs, time, type));
-        addLog(`Consumo: ${carbs}g de carbohidratos (${type})`);
+        addLog(`+${carbs}g Carbs (${type})`);
+        syncToCloud();
     }
 
     function addInsulin(units) {
-        patient.I += units * 12; // Simplified bolus injection
-        addLog(`Bolo: ${units}u de insulina`);
+        patient.I += units * 12.5;
+        addLog(`+${units}u Insulina`);
+        syncToCloud();
     }
 
     function updateSpeed() {
@@ -306,6 +493,7 @@
         chart.update();
         document.getElementById('log').innerHTML = '';
         addLog("Simulador reiniciado.");
+        syncToCloud();
     }
 
     function initChart() {
@@ -315,13 +503,12 @@
             data: {
                 labels: [],
                 datasets: [{
-                    label: 'Glucosa',
                     data: [],
                     borderColor: '#00FFCC',
-                    backgroundColor: 'rgba(0, 255, 204, 0.1)',
-                    borderWidth: 2,
+                    backgroundColor: 'rgba(0, 255, 204, 0.05)',
+                    borderWidth: 3,
                     pointRadius: 0,
-                    tension: 0.3,
+                    tension: 0.4,
                     fill: true
                 }]
             },
@@ -330,18 +517,22 @@
                 maintainAspectRatio: false,
                 scales: {
                     x: { display: false },
-                    y: { min: 0, max: 400, grid: { color: '#222' }, ticks: { color: '#666' } }
+                    y: { 
+                        min: 0, max: 400, 
+                        grid: { color: '#222', drawBorder: false },
+                        ticks: { color: '#666', font: { size: 10 } }
+                    }
                 },
                 plugins: {
                     legend: { display: false },
                     annotation: {
                         annotations: {
                             target: {
-                                type: 'box',
-                                yMin: 70, yMax: 140,
-                                backgroundColor: 'rgba(0, 255, 100, 0.05)',
-                                borderWidth: 0
-                            }
+                                type: 'box', yMin: 70, yMax: 140,
+                                backgroundColor: 'rgba(0, 255, 100, 0.03)', borderWidth: 0
+                            },
+                            limitLow: { type: 'line', yMin: 70, yMax: 70, borderColor: '#333', borderWidth: 1, borderDash: [5,5] },
+                            limitHigh: { type: 'line', yMin: 180, yMax: 180, borderColor: '#333', borderWidth: 1, borderDash: [5,5] }
                         }
                     }
                 }
@@ -349,123 +540,66 @@
         });
     }
 
-    // --- CLOUD SYNC (GUN.js) ---
-    // Usamos múltiples repetidores para mayor estabilidad
-    const gun = Gun([
-        'https://gun-manhattan.herokuapp.com/gun',
-        'https://peer.wall.org/gun',
-        'https://gundb-relay.herokuapp.com/gun'
-    ]);
-    
-    // Llave única para tu proyecto
-    const cloud = gun.get('miguel-gravity-glucose-v2-1');
-    let lastRemoteUpdate = 0;
-
-    function syncToCloud() {
-        const now = Date.now();
-        cloud.put({
-            G: patient.G,
-            I: patient.I,
-            X: patient.X,
-            time: time,
-            timestamp: now
-        });
-        document.getElementById('sync-status').innerText = "SYNCED";
-        document.getElementById('sync-status').classList.add('sync-online');
-    }
-
-    cloud.on((data) => {
-        if (!data) return;
-        
-        // Solo aceptamos la actualización si es más reciente que la nuestra
-        // y si los valores son significativamente diferentes
-        const isNewer = data.timestamp > lastRemoteUpdate;
-        
-        if (isNewer) {
-            lastRemoteUpdate = data.timestamp;
-            
-            if (Math.abs(data.G - patient.G) > 1) {
-                patient.G = data.G;
-            }
-            if (Math.abs(data.I - patient.I) > 1) {
-                patient.I = data.I;
-            }
-            patient.X = data.X;
-            // Solo sincronizamos el tiempo si la diferencia es grande
-            if (Math.abs(data.time - time) > 10) {
-                time = data.time;
-            }
-            
-            document.getElementById('sync-status').innerText = "ONLINE";
-            document.getElementById('sync-status').classList.add('sync-online');
-        }
-    });
-
     function loop() {
         time += 1;
         patient.step(time, 1);
         
-        // Cada 10 ticks (10 seg en tiempo real) sincronizamos
-        if (time % 10 === 0) syncToCloud();
         const h = Math.floor(time / 60).toString().padStart(2, '0');
         const m = Math.floor(time % 60).toString().padStart(2, '0');
         document.getElementById('clock').innerText = `${h}:${m}`;
         
         const gVal = Math.round(patient.G);
-        document.getElementById('glucose-val').innerText = gVal;
+        const elVal = document.getElementById('glucose-val');
+        elVal.innerText = gVal;
         
-        // IOB
         const iob = Math.max(0, (patient.I - IB_BASE) / 10).toFixed(2);
         document.getElementById('val-iob').innerText = `${iob} U`;
 
-        // Alarms & AI Status
         const aiStatus = document.getElementById('ai-status');
-        const display = document.getElementById('bg-display');
         if (gVal < 70) {
-            aiStatus.innerText = "🚨 PELIGRO: HIPOGLUCEMIA";
-            aiStatus.style.color = "var(--blood-red)";
-            display.style.borderColor = "var(--blood-red)";
+            aiStatus.innerText = "🚨 ALERTA: HIPOGLUCEMIA";
+            aiStatus.style.color = "var(--danger-color)";
+            elVal.style.color = "var(--danger-color)";
         } else if (gVal > 180) {
             aiStatus.innerText = "⚠️ ALERTA: HIPERGLUCEMIA";
-            aiStatus.style.color = "var(--high)";
-            display.style.borderColor = "var(--high)";
+            aiStatus.style.color = "var(--warning-color)";
+            elVal.style.color = "var(--warning-color)";
         } else {
             aiStatus.innerText = "✅ ESTADO: ÓPTIMO";
-            aiStatus.style.color = "var(--libre-cyan)";
-            display.style.borderColor = "#222";
+            aiStatus.style.color = "var(--accent-color)";
+            elVal.style.color = "var(--accent-color)";
         }
 
-        // Trend
         const lastG = patient.history[patient.history.length - 1] || patient.G;
         const diff = patient.G - lastG;
         const trend = document.getElementById('trend-arrow');
-        if (diff > 1.5) trend.innerText = "↑";
-        else if (diff > 0.5) trend.innerText = "↗";
-        else if (diff < -1.5) trend.innerText = "↓";
-        else if (diff < -0.5) trend.innerText = "↘";
+        if (diff > 1.2) trend.innerText = "↑";
+        else if (diff > 0.4) trend.innerText = "↗";
+        else if (diff < -1.2) trend.innerText = "↓";
+        else if (diff < -0.4) trend.innerText = "↘";
         else trend.innerText = "→";
+        trend.style.color = elVal.style.color;
 
-        // Prediction (Simple linear 30m)
         const pred = Math.round(patient.G + (diff * 30));
         document.getElementById('val-pred').innerText = `${pred} mg/dL`;
 
-        // Chart update
         patient.history.push(patient.G);
-        if (patient.history.length > 300) patient.history.shift();
-        
         chart.data.labels.push("");
         chart.data.datasets[0].data.push(patient.G);
-        if (chart.data.labels.length > 300) {
+        if (chart.data.labels.length > 200) {
             chart.data.labels.shift();
             chart.data.datasets[0].data.shift();
         }
         chart.update('none');
 
+        if (time % 10 === 0) syncToCloud();
         timerId = setTimeout(loop, speed);
     }
 
-    initChart();
-    loop();
+    window.onload = () => {
+        initChart();
+        loop();
+    };
 </script>
 
 </body>
