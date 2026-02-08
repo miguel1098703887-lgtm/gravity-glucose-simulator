@@ -3,12 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gravity Glucose Simulator v3.2 [STABLE]</title>
+    <title>Gravity Glucose Simulator v3.3 [FIXED]</title>
     
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
-    
-    <!-- External Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
@@ -27,21 +24,15 @@
             --border-color: #2c2c2e;
         }
 
-        * {
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
         body {
             background-color: var(--bg-color);
             color: var(--text-primary);
             font-family: 'Inter', -apple-system, sans-serif;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            height: 100vh;
-            width: 100vw;
+            margin: 0; padding: 0;
+            display: flex; justify-content: center;
+            height: 100vh; width: 100vw;
             overflow: hidden;
         }
 
@@ -172,7 +163,7 @@
         .chart-section {
             flex: 1;
             padding: 0 12px;
-            min-height: 0;
+            min-height: 200px;
             display: flex;
             flex-direction: column;
         }
@@ -183,6 +174,7 @@
             border-radius: 20px;
             padding: 16px;
             border: 1px solid var(--border-color);
+            position: relative;
         }
 
         .log-section {
@@ -245,7 +237,7 @@
 <div class="app-container">
     <header>
         <div class="brand">
-            <h1>Gravity Sim <span style="font-weight:300">v3.2</span></h1>
+            <h1>Gravity Sim <span style="font-weight:300">v3.3</span></h1>
             <div id="sync-status" class="sync-badge">CONNECTING...</div>
         </div>
         <div id="clock" class="clock">00:00</div>
@@ -346,13 +338,13 @@
 
     // --- CLOUD SYNC ---
     const gun = Gun(['https://gun-manhattan.herokuapp.com/gun', 'https://peer.wall.org/gun']);
-    const cloud = gun.get('gravity-v3-2-stable');
+    const cloud = gun.get('gravity-v3-3-stable');
     let lastInboundTs = 0;
 
     function syncOut() {
         cloud.put({ G: patient.G, I: patient.I, X: patient.X, ts: Date.now() });
         const b = document.getElementById('sync-status');
-        b.innerText = "SYNCED"; b.classList.add('online');
+        if(b) { b.innerText = "SYNCED"; b.classList.add('online'); }
     }
 
     cloud.on(data => {
@@ -362,7 +354,7 @@
         if (Math.abs(data.I - patient.I) > 2) patient.I = data.I;
         patient.X = data.X;
         const b = document.getElementById('sync-status');
-        b.innerText = "ONLINE"; b.classList.add('online');
+        if(b) { b.innerText = "ONLINE"; b.classList.add('online'); }
     });
 
     // --- LOGIC ---
@@ -371,6 +363,7 @@
 
     function addLog(msg) {
         const log = document.getElementById('log');
+        if(!log) return;
         const h = Math.floor(time / 60).toString().padStart(2, '0');
         const m = Math.floor(time % 60).toString().padStart(2, '0');
         log.innerHTML = `<div>[${h}:${m}] ${msg}</div>` + log.innerHTML;
@@ -379,15 +372,16 @@
     function addMeal(c, t) { patient.meals.push(new Meal(c, time, t)); addLog(`+${c}g Carbs`); syncOut(); }
     function addInsulin(u) { patient.I += u * 12.5; addLog(`+${u}u Insulina`); syncOut(); }
     function updateSpeed() { speed = parseInt(document.getElementById('speed-sel').value); clearTimeout(timerId); loop(); }
-    function resetSim() { time = 0; patient.reset(); chart.data.labels = []; chart.data.datasets[0].data = []; chart.update(); addLog("Reset."); syncOut(); }
+    function resetSim() { time = 0; patient.reset(); if(chart) { chart.data.labels = []; chart.data.datasets[0].data = []; chart.update(); } addLog("Reset."); syncOut(); }
 
     function initChart() {
         const ctx = document.getElementById('mainChart').getContext('2d');
+        if(!ctx) return;
         chart = new Chart(ctx, {
             type: 'line',
             data: { labels: [], datasets: [{ data: [], borderColor: '#00FFCC', backgroundColor: 'rgba(0, 255, 204, 0.05)', borderWidth: 3, pointRadius: 0, tension: 0.4, fill: true }] },
             options: {
-                responsive: true, maintainAspectRatio: false,
+                responsive: true, maintainAspectRatio: false, animation: false,
                 scales: { x: { display: false }, y: { min: 0, max: 400, grid: { color: '#222', drawBorder: false }, ticks: { color: '#444', font: { size: 9 } } } },
                 plugins: { legend: { display: false }, annotation: { annotations: { t: { type: 'box', yMin: 70, yMax: 140, backgroundColor: 'rgba(0, 255, 100, 0.02)', borderWidth: 0 } } } }
             }
@@ -395,44 +389,62 @@
     }
 
     function loop() {
+        // Guardamos el valor anterior para la tendencia ANTES de actualizar G
+        const lastG = patient.G;
+        
         time += 1;
         patient.step(time, 1);
         
         const h = Math.floor(time / 60).toString().padStart(2, '0');
         const m = Math.floor(time % 60).toString().padStart(2, '0');
-        document.getElementById('clock').innerText = `${h}:${m}`;
+        const clockEl = document.getElementById('clock');
+        if(clockEl) clockEl.innerText = `${h}:${m}`;
         
         const gVal = Math.round(patient.G);
         const elVal = document.getElementById('glucose-val');
-        elVal.innerText = gVal;
+        if(elVal) elVal.innerText = gVal;
         
-        document.getElementById('val-iob').innerText = `${Math.max(0, (patient.I - IB_BASE) / 10).toFixed(2)} U`;
+        const iobEl = document.getElementById('val-iob');
+        if(iobEl) iobEl.innerText = `${Math.max(0, (patient.I - IB_BASE) / 10).toFixed(2)} U`;
 
         const aiStatus = document.getElementById('ai-status');
-        if (gVal < 70) { aiStatus.innerText = "🚨 HIPOGLUCEMIA"; aiStatus.style.color = "var(--danger-color)"; elVal.style.color = "var(--danger-color)"; }
-        else if (gVal > 180) { aiStatus.innerText = "⚠️ HIPERGLUCEMIA"; aiStatus.style.color = "var(--warning-color)"; elVal.style.color = "var(--warning-color)"; }
-        else { aiStatus.innerText = "✅ ESTADO ÓPTIMO"; aiStatus.style.color = "var(--accent-color)"; elVal.style.color = "var(--accent-color)"; }
+        if (aiStatus && elVal) {
+            if (gVal < 70) { aiStatus.innerText = "🚨 HIPOGLUCEMIA"; aiStatus.style.color = "var(--danger-color)"; elVal.style.color = "var(--danger-color)"; }
+            else if (gVal > 180) { aiStatus.innerText = "⚠️ HIPERGLUCEMIA"; aiStatus.style.color = "var(--warning-color)"; elVal.style.color = "var(--warning-color)"; }
+            else { aiStatus.innerText = "✅ ESTADO ÓPTIMO"; aiStatus.style.color = "var(--accent-color)"; elVal.style.color = "var(--accent-color)"; }
+        }
 
-        const lastG = patient.history[patient.history.length - 1] || patient.G;
         const diff = patient.G - lastG;
         const tr = document.getElementById('trend-arrow');
-        if (diff > 1.2) tr.innerText = "↑"; else if (diff > 0.4) tr.innerText = "↗";
-        else if (diff < -1.2) tr.innerText = "↓"; else if (diff < -0.4) tr.innerText = "↘";
-        else tr.innerText = "→";
-        tr.style.color = elVal.style.color;
+        if (tr && elVal) {
+            if (diff > 1.2) tr.innerText = "↑"; else if (diff > 0.4) tr.innerText = "↗";
+            else if (diff < -1.2) tr.innerText = "↓"; else if (diff < -0.4) tr.innerText = "↘";
+            else tr.innerText = "→";
+            tr.style.color = elVal.style.color;
+        }
 
-        document.getElementById('val-pred').innerText = `${Math.round(patient.G + (diff * 30))} mg/dL`;
+        const predEl = document.getElementById('val-pred');
+        if(predEl) predEl.innerText = `${Math.round(patient.G + (diff * 30))} mg/dL`;
 
-        patient.history.push(patient.G);
-        chart.data.labels.push(""); chart.data.datasets[0].data.push(patient.G);
-        if (chart.data.labels.length > 200) { chart.data.labels.shift(); chart.data.datasets[0].data.shift(); }
-        chart.update('none');
+        // Actualizamos la gráfica
+        if(chart) {
+            chart.data.labels.push(""); 
+            chart.data.datasets[0].data.push(patient.G);
+            if (chart.data.labels.length > 100) { 
+                chart.data.labels.shift(); 
+                chart.data.datasets[0].data.shift(); 
+            }
+            chart.update();
+        }
 
         if (time % 10 === 0) syncOut();
         timerId = setTimeout(loop, speed);
     }
 
-    window.onload = () => { initChart(); loop(); };
+    window.onload = () => { 
+        initChart(); 
+        loop(); 
+    };
 </script>
 
 </body>
